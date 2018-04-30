@@ -27,27 +27,27 @@ while(True):
     ret, frame = cap.read()
 
     FILTER_HSV = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    
+
     greenXY = findBlocks(frame,FILTER_HSV,greenLower,greenUpper,"Green")
     orangeXY = findBlocks(frame,FILTER_HSV,orangeLower,orangeUpper,"Orange")
     pinkXY = findBlocks(frame,FILTER_HSV,pinkLower,pinkUpper,"Pink")
-    
+
     yOffset = 715
     yStepUp = 15
     ySteps = 0
-    
+
     if((greenXY[0] > 0.00) & (greenXY[1] > 0.00)):
         cv2.putText(frame, "Green Block Location: (X %i) (Y %i) " % (greenXY[0], greenXY[1]),(0, yOffset - yStepUp*ySteps), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
         ySteps = ySteps + 1
-    
+
     if((orangeXY[0] > 0.00) & (orangeXY[1] > 0.00)):
         cv2.putText(frame, "Orange Block Location: (X %i) (Y %i) " % (orangeXY[0], orangeXY[1]),(0, yOffset - yStepUp*ySteps), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
         ySteps = ySteps + 1
-        
+
     if((pinkXY[0] > 0.00) & (pinkXY[1] > 0.00)):
         cv2.putText(frame, "Pink Block Location: (X %i) (Y %i) " % (pinkXY[0], pinkXY[1]),(0, yOffset - yStepUp*ySteps), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
         ySteps = ySteps + 1
-        
+
     # Display the resulting frame
     cv2.imshow('frame',frame)
 
