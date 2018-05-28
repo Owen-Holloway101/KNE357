@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from visionUtils import findBlocks
 
 print (cv2.__version__)
 
@@ -12,110 +13,63 @@ cap.set(4,720)
 #colour defs
 
 #light green
-greenLower = np.array([38, 112, 108],np.uint8)
-greenUpper = np.array([150, 180, 180],np.uint8)
+greenLower = np.array([45, 103, 56],np.uint8)
+greenUpper = np.array([114, 255, 255],np.uint8)
 
-orangeLower = np.array([0, 108, 112],np.uint8)
-orangeUpper = np.array([31, 255, 255],np.uint8)
+orangeLower = np.array([0, 103, 56],np.uint8)
+orangeUpper = np.array([0, 255, 255],np.uint8)
 
-pinkLower = np.array([96, 114, 166],np.uint8)
-pinkUpper = np.array([192, 199, 245],np.uint8)
+pinkLower = np.array([86, 103, 56],np.uint8)
+pinkUpper = np.array([196, 255, 255],np.uint8)
+
+yellowLower = np.array([16, 103, 56],np.uint8)
+yellowUpper = np.array([37, 255, 255],np.uint8)
+
+frames = 0
+greenCounts = 0
+orangeCounts = 0
+pinkCounts = 0
+yellowCounts = 0
 
 while(True):
     # Capture frame-by-frame
     ret, frame = cap.read()
 
-    # Our operations on the frame come here
-    #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    frames = frames + 1
+
     FILTER_HSV = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    FILTER_YELLOW = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    mask_green = cv2.inRange(FILTER_HSV, greenLower, greenUpper)
-    mask_green = cv2.erode(mask_green, None, iterations=2)
-    mask_green = cv2.dilate(mask_green, None, iterations=2)
+    greenXY = findBlocks(frame,FILTER_HSV,greenLower,greenUpper,"Green")
+    orangeXY = findBlocks(frame,FILTER_HSV,orangeLower,orangeUpper,"Orange")
+    pinkXY = findBlocks(frame,FILTER_HSV,pinkLower,pinkUpper,"Pink")
+    yellowXY = findBlocks(frame,FILTER_HSV,yellowLower,yellowUpper,"Yellow")
 
-    mask_orange = cv2.inRange(FILTER_HSV, orangeLower, orangeUpper)
-    mask_orange = cv2.erode(mask_orange, None, iterations=2)
-    mask_orange = cv2.dilate(mask_orange, None, iterations=2)
-    
-    mask_pink = cv2.inRange(FILTER_HSV, pinkLower, pinkUpper)
-    mask_pink = cv2.erode(mask_pink, None, iterations=2)
-    mask_pink = cv2.dilate(mask_pink, None, iterations=2)
-    
-    cntsgreen = cv2.findContours(mask_green.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
-    
+    yOffset = 715
+    yStepUp = 15
+    ySteps = 0
 
-    #print("found %i green box(s) found %i yellow box(s)" % (len(cntsgreen),len(cntsyellow)),end="\r")
+    cv2.putText(frame,"Total Frames: %i" % (frames), (0,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
 
-    if len(cntsgreen) > 0:
-        c = max(cntsgreen, key=cv2.contourArea)
-        M = cv2.moments(c)
-        #print(M)
-        # find the largest contour in the mask, then use
-        # it to compute the minimum enclosing circle and
-        # centroid
-        c = max(cntsgreen, key=cv2.contourArea)
-        ((x, y), radius) = cv2.minEnclosingCircle(c)
-        M = cv2.moments(c)
-        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+    if((greenXY[0] > 0.00) & (greenXY[1] > 0.00)):
+        greenCounts = greenCounts + 1
+        cv2.putText(frame, "Green Block Location: (X %i) (Y %i) reliability: %i" % (greenXY[0], greenXY[1],greenCounts/frames*100),(0, yOffset - yStepUp*ySteps), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
+        ySteps = ySteps + 1
 
-        # only proceed if the radius meets a minimum size
-        if radius > 10:
-            # draw the circle and centroid on the frame,
-            # then update the list of tracked points
-            cv2.circle(frame, (int(x), int(y)), int(radius),(0, 255, 255), 2)
-            cv2.circle(frame, center, 5, (0, 0, 255), -1)
-            cv2.putText(frame, 'Green',(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, 100)
+    if((orangeXY[0] > 0.00) & (orangeXY[1] > 0.00)):
+        orangeCounts = orangeCounts + 1
+        cv2.putText(frame, "Orange Block Location: (X %i) (Y %i) reliability: %i" % (orangeXY[0], orangeXY[1],orangeCounts/frames*100),(0, yOffset - yStepUp*ySteps), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
+        ySteps = ySteps + 1
 
+    if((pinkXY[0] > 0.00) & (pinkXY[1] > 0.00)):
+        pinkCounts = pinkCounts + 1
+        cv2.putText(frame, "Pink Block Location: (X %i) (Y %i) reliability: %i" % (pinkXY[0], pinkXY[1],pinkCounts/frames*100),(0, yOffset - yStepUp*ySteps), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
+        ySteps = ySteps + 1
 
-            
-            
-    cntspink = cv2.findContours(mask_pink.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
-        
-    if len(cntspink) > 0:
-        c = max(cntspink, key=cv2.contourArea)
-        M = cv2.moments(c)
-        #print(M)
-        # find the largest contour in the mask, then use
-        # it to compute the minimum enclosing circle and
-        # centroid
-        c = max(cntspink, key=cv2.contourArea)
-        ((x, y), radius) = cv2.minEnclosingCircle(c)
-        M = cv2.moments(c)
-        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+    if((yellowXY[0] > 0.00) & (yellowXY[1] > 0.00)):
+        yellowCounts = yellowCounts + 1
+        cv2.putText(frame, "Yellow Block Location: (X %i) (Y %i) reliability: %i" % (yellowXY[0], yellowXY[1],yellowCounts/frames*100),(0, yOffset - yStepUp*ySteps), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
+        ySteps = ySteps + 1
 
-        # only proceed if the radius meets a minimum size
-        if radius > 10:
-            # draw the circle and centroid on the frame,
-            # then update the list of tracked points
-            cv2.circle(frame, (int(x), int(y)), int(radius),(0, 255, 255), 2)
-            cv2.circle(frame, center, 5, (0, 0, 255), -1)
-            cv2.putText(frame, 'Pink',(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, 100)
-        
-    
-    cntsorange = cv2.findContours(mask_orange.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
-        
-    if len(cntsorange) > 0:
-        c = max(cntsorange, key=cv2.contourArea)
-        M = cv2.moments(c)
-        #print(M)
-        # find the largest contour in the mask, then use
-        # it to compute the minimum enclosing circle and
-        # centroid
-        c = max(cntsorange, key=cv2.contourArea)
-        ((x, y), radius) = cv2.minEnclosingCircle(c)
-        M = cv2.moments(c)
-        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-
-        # only proceed if the radius meets a minimum size
-        if radius > 10:
-            # draw the circle and centroid on the frame,
-            # then update the list of tracked points
-            cv2.circle(frame, (int(x), int(y)), int(radius),(0, 255, 255), 2)
-            cv2.circle(frame, center, 5, (0, 0, 255), -1)
-            cv2.putText(frame, 'Orange',(int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, 100)
-    
-        
     # Display the resulting frame
     cv2.imshow('frame',frame)
 
